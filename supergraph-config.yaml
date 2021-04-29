@@ -1,0 +1,9 @@
+subgraphs:
+  users:
+    routing_url: http://localhost:4000/graphql
+    schema:
+      file: ./graphQL/users.graphql
+  posts:
+    routing_url: http://localhost:4001/graphql
+    schema:
+      file: ./graphQL/posts.graphql

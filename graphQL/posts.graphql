@@ -1,0 +1,49 @@
+extend type Query {
+  getPosts(start: Int = 0, length: Int = 10, sortByProperty: String = "created_at", isSortASC: Boolean = false): [Post] # @cacheControl(maxAge: 500)
+  getPost(id: ID!, userId: String!): Post # @cacheControl(maxAge: 500)
+}
+
+extend type Mutation {
+  addPost(title: String!, content: String!, userID: String!, imageURL: String): PostResponse
+  updatePost(
+    _id: ID!
+    userID: String!
+    title: String
+    content: String
+    imageURL: String
+    status: AllowedPostStatus
+  ): PostResponse
+  deletePost(_id: ID!, userID: String!): PostResponse
+  clapPost(postID: String!, userID: String!): PostResponse
+}
+
+enum AllowedPostStatus {
+  SHOW
+  HIDDEN
+}
+
+type Post @key(fields: "_id") {
+  _id: ID!
+  user: User
+  title: String
+  content: String
+  imageURL: String
+  status: String
+  clap: [User]
+  # comments: [Comment],
+  created_at: String,
+  updated_at: String
+}
+
+extend type User @key(fields: "_id") {
+  _id: ID! @external
+  # posts: [Post]
+  # subscribes: [Post]
+}
+
+type PostResponse {
+  result: String
+  message: String
+  data: Post
+}
+

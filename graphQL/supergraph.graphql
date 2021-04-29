@@ -1,0 +1,103 @@
+schema
+  @core(feature: "https://specs.apollo.dev/core/v0.1"),
+  @core(feature: "https://specs.apollo.dev/join/v0.1")
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @core(feature: String!) repeatable on SCHEMA
+
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet) on FIELD_DEFINITION
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on OBJECT | INTERFACE
+
+directive @join__owner(graph: join__Graph!) on OBJECT | INTERFACE
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+enum AllowedPostStatus {
+  SHOW
+  HIDDEN
+}
+
+enum AllowedUserStatus {
+  ONLINE
+  OFFLINE
+}
+
+scalar join__FieldSet
+
+enum join__Graph {
+  POSTS @join__graph(name: "posts" url: "http://localhost:4001/graphql")
+  USERS @join__graph(name: "users" url: "http://localhost:4000/graphql")
+}
+
+type Mutation {
+  addPost(title: String!, content: String!, userID: String!, imageURL: String): PostResponse @join__field(graph: POSTS)
+  updatePost(_id: ID!, userID: String!, title: String, content: String, imageURL: String, status: AllowedPostStatus): PostResponse @join__field(graph: POSTS)
+  deletePost(_id: ID!, userID: String!): PostResponse @join__field(graph: POSTS)
+  clapPost(postID: String!, userID: String!): PostResponse @join__field(graph: POSTS)
+  addUser(username: String!, password: String!, email: String!): UserResponse @join__field(graph: USERS)
+  updateUser(id: String!, phone: String, name: String, address: String, avatar: String, facebook: String, gender: String, status: AllowedUserStatus): UserResponse @join__field(graph: USERS)
+  addPostToUser(_id: String!, postID: String!): UserResponse @join__field(graph: USERS)
+  removePostFromUser(_id: String!, postID: String!): UserResponse @join__field(graph: USERS)
+  subscribePost(_id: String!, postID: String!): UserResponse @join__field(graph: USERS)
+}
+
+type Post
+  @join__owner(graph: POSTS)
+  @join__type(graph: POSTS, key: "_id")
+  @join__type(graph: USERS, key: "_id")
+{
+  _id: ID! @join__field(graph: POSTS)
+  user: User @join__field(graph: POSTS)
+  title: String @join__field(graph: POSTS)
+  content: String @join__field(graph: POSTS)
+  imageURL: String @join__field(graph: POSTS)
+  status: String @join__field(graph: POSTS)
+  clap: [User] @join__field(graph: POSTS)
+  created_at: String @join__field(graph: POSTS)
+  updated_at: String @join__field(graph: POSTS)
+}
+
+type PostResponse {
+  result: String
+  message: String
+  data: Post
+}
+
+type Query {
+  getPosts(start: Int = 0, length: Int = 10, sortByProperty: String = "created_at", isSortASC: Boolean = false): [Post] @join__field(graph: POSTS)
+  getPost(id: ID!, userId: String!): Post @join__field(graph: POSTS)
+  getUser(_id: String!): User @join__field(graph: USERS)
+  login(username: String!, password: String!): User @join__field(graph: USERS)
+  users: [User] @join__field(graph: USERS)
+  user(_id: ID!): User @join__field(graph: USERS)
+}
+
+type User
+  @join__owner(graph: USERS)
+  @join__type(graph: USERS, key: "_id")
+  @join__type(graph: POSTS, key: "_id")
+{
+  _id: ID! @join__field(graph: USERS)
+  phone: String @join__field(graph: USERS)
+  username: String @join__field(graph: USERS)
+  name: String @join__field(graph: USERS)
+  address: String @join__field(graph: USERS)
+  avatar: String @join__field(graph: USERS)
+  facebook: String @join__field(graph: USERS)
+  email: String @join__field(graph: USERS)
+  gender: String @join__field(graph: USERS)
+  status: String @join__field(graph: USERS)
+  posts: [Post] @join__field(graph: USERS)
+  subscribes: [Post] @join__field(graph: USERS)
+}
+
+type UserResponse {
+  result: String
+  message: String
+  data: Post
+}
+

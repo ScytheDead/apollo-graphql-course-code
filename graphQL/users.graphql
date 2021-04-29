@@ -1,0 +1,57 @@
+extend type Query {
+  getUser(_id: String!): User
+  login(username: String!, password: String!): User
+  # getPostsByUser (_id: String!): [Post],
+  # getSubscriptionPosts (_id: String!): [Post],
+  users: [User]
+  user(_id: ID!): User
+}
+
+extend type Mutation {
+  addUser(username: String!, password: String!, email: String!): UserResponse
+  updateUser(
+    id: String!,
+    phone: String,
+    name: String,
+    address: String,
+    avatar: String,
+    facebook: String,
+    gender: String,
+    status: AllowedUserStatus
+  ): UserResponse
+  addPostToUser(_id: String!, postID: String!): UserResponse
+  removePostFromUser(_id: String!, postID: String!): UserResponse
+  subscribePost(_id: String!, postID: String!): UserResponse
+}
+
+enum AllowedUserStatus {
+  ONLINE
+  OFFLINE
+}
+
+
+type User @key(fields: "_id") {
+  _id: ID!
+  phone: String
+  username: String
+  name: String
+  address: String
+  avatar: String
+  facebook: String
+  email: String
+  gender: String
+  status: String
+  posts: [Post]
+  subscribes: [Post]
+}
+
+extend type Post @key(fields: "_id") {
+  _id: ID! @external
+  # clap: [User] @external
+}
+
+type UserResponse {
+  result: String
+  message: String
+  data: Post
+}
