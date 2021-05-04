@@ -1,6 +1,5 @@
 extend type Query {
   getUser(_id: String!): User
-  login(username: String!, password: String!): User
   # getPostsByUser (_id: String!): [Post],
   # getSubscriptionPosts (_id: String!): [Post],
   users: [User]
@@ -8,7 +7,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  addUser(username: String!, password: String!, email: String!): UserResponse
+  addUser(username: String!, password: String!, email: String!, role: String!, permissions: [String!]): UserResponse
   updateUser(
     id: String!,
     phone: String,
@@ -22,6 +21,7 @@ extend type Mutation {
   addPostToUser(_id: String!, postID: String!): UserResponse
   removePostFromUser(_id: String!, postID: String!): UserResponse
   subscribePost(_id: String!, postID: String!): UserResponse
+  login(username: String!, password: String!): UserResponse
 }
 
 enum AllowedUserStatus {
@@ -43,6 +43,8 @@ type User @key(fields: "_id") {
   status: String
   posts: [Post]
   subscribes: [Post]
+  role: String
+  permissions: [String]
 }
 
 extend type Post @key(fields: "_id") {
@@ -53,5 +55,5 @@ extend type Post @key(fields: "_id") {
 type UserResponse {
   result: String
   message: String
-  data: Post
+  data: User
 }
