@@ -1,6 +1,6 @@
 const { ApolloServer } = require('apollo-server-express');
 const { ApolloGateway, RemoteGraphQLDataSource } = require('@apollo/gateway');
-const { readFileSync } = require('fs');
+// const { readFileSync } = require('fs');
 const express = require('express');
 const expressJwt = require('express-jwt');
 require('dotenv').config();
@@ -17,7 +17,7 @@ app.use(
   }),
 );
 
-const supergraphSchema = readFileSync('./graphQL/supergraph.graphql').toString();
+// const supergraphSchema = readFileSync('./graphQL/supergraph.graphql').toString();
 
 // Initialize an ApolloGateway instance and pass it an array of
 // your implementing service names and URLs

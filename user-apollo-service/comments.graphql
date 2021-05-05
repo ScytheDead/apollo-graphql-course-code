@@ -1,0 +1,45 @@
+# type Query {
+#   getComments(postID: String!, start: Int, length: Int): [Post] # @cacheControl(maxAge: 500)
+# }
+
+# type Mutation {
+#   addComment(postID: String!, userID: String!, content: String!): Comment
+#   updateComment(
+#     _id: String!
+#     postID: String!
+#     content: String!
+#     clapNumber: Int
+#   ): Comment
+#   deleteComment(id: String!): Comment
+
+#   addSubComment(commentID: String!,  postID: String!, userID: String!, content: String!): Comment
+#   updateSubComment(
+#     commentID: String!
+#     subCommentID: String!
+#     postID: String!
+#     content: String
+#     clapNumber: Int
+#   ): Comment
+#   deleteSubComment(commentID: String!, subCommentID: String!): Comment
+# }
+
+# type Comment {
+#   _id: String!
+#   post: String!
+#   contentComment: [ContentComment]
+# }
+
+# type ContentComment {
+#   user: User
+#   content: String
+#   time: String
+#   clap: User
+#   subComments: [SubComment]
+# }
+
+# type SubComment {
+#   user: User
+#   content: String
+#   time: String
+#   clap: User
+# }

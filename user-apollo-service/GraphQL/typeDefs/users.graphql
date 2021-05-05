@@ -1,0 +1,84 @@
+extend type Query {
+  # getPostsByUser (_id: String!): [Post],
+  # getSubscriptionPosts (_id: String!): [Post],
+  users: UserResponse
+  user(_id: ID!): UserResponse
+}
+
+extend type Mutation {
+  login(username: String!, password: String!): LoginResponse
+  addUser(username: String!, password: String!, email: String!, role: String!, permissions: [String!]): UserResponse
+  updateUser(
+    id: String!,
+    phone: String,
+    name: String,
+    address: String,
+    avatar: String,
+    facebook: String,
+    gender: String,
+    status: AllowedUserStatus
+  ): UserResponse
+  addPostToUser(_id: String!, postID: String!): UserResponse
+  removePostFromUser(_id: String!, postID: String!): UserResponse
+  subscribePost(_id: String!, postID: String!): UserResponse
+}
+
+enum AllowedUserStatus {
+  ONLINE
+  OFFLINE
+}
+
+
+type User @key(fields: "_id") {
+  _id: ID!
+  phone: String
+  username: String
+  name: String
+  address: String
+  avatar: String
+  facebook: String
+  email: String
+  gender: String
+  status: String
+  posts: [Post]
+  subscribes: [Post]
+  role: String
+  permissions: [String]
+}
+
+extend type Post @key(fields: "_id") {
+  _id: ID! @external
+  # clap: [User] @external
+}
+
+union UserResponse = UserResult | UserUnauthorized
+
+type UserResult {
+  result: String
+  message: String
+  data: UserData
+}
+
+type UserUnauthorized {
+  error: String
+}
+
+union UserData = User | ListUser
+
+type ListUser {
+  users: [User]
+}
+
+
+union LoginResponse = LoginSuccess | LoginFail
+
+type LoginSuccess {
+  result: String
+  token: String
+}
+
+type LoginFail {
+  result: String
+  message: String
+}
+
