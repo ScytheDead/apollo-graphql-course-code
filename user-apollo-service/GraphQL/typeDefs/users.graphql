@@ -9,7 +9,7 @@ extend type Mutation {
   login(username: String!, password: String!): LoginResponse
   addUser(username: String!, password: String!, email: String!, role: String!, permissions: [String!]): UserResponse
   updateUser(
-    id: String!,
+    _id: ID!,
     phone: String,
     name: String,
     address: String,
@@ -18,9 +18,9 @@ extend type Mutation {
     gender: String,
     status: AllowedUserStatus
   ): UserResponse
-  addPostToUser(_id: String!, postID: String!): UserResponse
-  removePostFromUser(_id: String!, postID: String!): UserResponse
-  subscribePost(_id: String!, postID: String!): UserResponse
+  addPostToUser(_id: ID!, postID: String!): UserResponse
+  removePostFromUser(_id: ID!, postID: String!): UserResponse
+  subscribePost(_id: ID!, postID: String!): UserResponse
 }
 
 enum AllowedUserStatus {
@@ -67,6 +67,10 @@ union UserData = User | ListUser
 
 type ListUser {
   users: [User]
+}
+
+extend type ListPost @key(fields: "user") {
+  user: ID! @external
 }
 
 

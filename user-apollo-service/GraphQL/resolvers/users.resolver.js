@@ -1,12 +1,12 @@
 const md5 = require('md5');
-const { UserInputError } = require('apollo-server-express');
+// const { UserInputError } = require('apollo-server-express');
 const jwt = require('jsonwebtoken');
-const { getSelectedFieldsString } = require('../../utils/graphql');
-const { redisRemoveAllKeysByPattern, redisSet } = require('../../utils/redis');
-const { createKeyRedisUserSession } = require('../../utils/helpers');
+// const { getSelectedFieldsString } = require('../../utils/graphql');
+// const { redisRemoveAllKeysByPattern, redisSet } = require('../../utils/redis');
+// const { createKeyRedisUserSession } = require('../../utils/helpers');
 const User = require('../../models/user');
 
-const { EXPIRATION_TIME_REDIS_CACHE } = process.env;
+// const { EXPIRATION_TIME_REDIS_CACHE } = process.env;
 
 module.exports = {
   Mutation: {
@@ -14,12 +14,11 @@ module.exports = {
       const { username, password, email, role, permissions } = args;
       const passwordEncryption = md5(password);
 
-      const selectedFieldsString = getSelectedFieldsString(info);
-
       try {
         const user = await User.findOne({ $or: [{ username }, { email }] });
         if (user) {
           return {
+            __typename: 'UserResult',
             result: 'fail',
             message: 'Username or email already exists',
           };
@@ -34,49 +33,66 @@ module.exports = {
         });
         const userSaved = await newUser.save();
 
-        // Clear cache movie
-        // redisRemoveAllKeysByPattern(redis, 'user:*');
-
         return {
+          __typename: 'UserResult',
           result: 'success',
-          data: userSaved,
+          data: {
+            __typename: 'User',
+            ...userSaved,
+          },
         };
       } catch (error) {
-        console.error(error);
-        return error;
+        return {
+          __typename: 'UserResult',
+          result: 'fail',
+          message: error.message,
+        };
       }
     },
-    updateUser: async (parent, args, context, info) => {
-      const selectedFieldsString = getSelectedFieldsString(info);
-      const { redis } = context;
-      const { id, ...dataUpdate } = args;
+    updateUser: async (parent, args) => {
+      const { _id, ...dataUpdate } = args;
 
       try {
+        const user = await User.findById(_id);
+        if (!user) {
+          return {
+            __typename: 'UserResult',
+            result: 'fail',
+            message: 'Invalid user ID',
+          };
+        }
+
+        for (const key in dataUpdate) {
+          user[key] = dataUpdate[key];
+        }
+
         // Update to DB
-        await User.findOneAndUpdate({ _id: id }, {
-          ...dataUpdate,
-        }, {
-          new: true,
-          useFindAndModify: false,
-        });
+        await user.save();
 
-        // Clear cache movie
-        const userSessionRedisKey = createKeyRedisUserSession(id, selectedFieldsString);
-        redisRemoveAllKeysByPattern(redis, userSessionRedisKey);
-
-        return User.findById(id).select(selectedFieldsString);
+        return {
+          __typename: 'UserResult',
+          result: 'success',
+          data: {
+            __typename: 'User',
+            ...user.toObject(),
+          },
+        };
       } catch (error) {
-        console.log(error);
+        return {
+          __typename: 'UserResult',
+          result: 'fail',
+          message: error.message,
+        };
       }
     },
-    removePostFromUser: async (parent, args, context, info) => {
-      const selectedFieldsString = getSelectedFieldsString(info);
+    removePostFromUser: async (parent, args) => {
       const { _id, postID } = args;
 
       try {
         const user = await User.findById({ _id });
         if (!user) {
           return {
+            __typename: 'UserResult',
             result: 'fail',
             message: 'Invalid user ID',
           };
@@ -86,63 +102,91 @@ module.exports = {
         await user.save();
 
         return {
+          __typename: 'UserResult',
           result: 'fail',
-          data: User,
+          data: {
+            __typename: 'User',
+            ...user.toObject(),
+          },
         };
       } catch (error) {
         return {
+          __typename: 'UserResult',
           result: 'fail',
           message: error.message,
         };
       }
     },
-    addPostToUser: async (parent, args, context, info) => {
-      const selectedFieldsString = getSelectedFieldsString(info);
+    addPostToUser: async (parent, args) => {
       const { _id, postID } = args;
 
       try {
-        const user = await User.findById({ _id });
+        const user = await User.findById(_id);
         if (!user) {
-          throw new UserInputError('Invalid user ID');
+          return {
+            __typename: 'UserResult',
+            result: 'fail',
+            message: 'Invalid user ID',
+          };
+        }
+
+        if (user.posts.includes(postID)) {
+          return {
+            __typename: 'UserResult',
+            result: 'fail',
+            message: 'This post already exists in current user',
+          };
         }
 
         user.posts.push(postID);
         await user.save();
 
-        return User.findById(_id).select(selectedFieldsString);
+        return {
+          __typename: 'UserResult',
+          result: 'success',
+          data: {
+            __typename: 'User',
+            ...user.toObject(),
+          },
+        };
       } catch (error) {
-        console.log(error);
-        return error;
+        return {
+          __typename: 'UserResult',
+          result: 'fail',
+          message: error.message,
+        };
       }
     },
-    subscribePost: async (parent, args, context, info) => {
-      const selectedFieldsString = getSelectedFieldsString(info);
-      const { redis } = context;
-      const { id } = args;
+    subscribePost: async (parent, args) => {
+      const { _id, postID } = args;
 
       try {
-        const user = await User.findOne({ id }).select(selectedFieldsString);
+        const user = await User.findById(_id);
         if (!user) {
-          throw new UserInputError('Invalid user ID');
+          return {
+            __typename: 'UserResult',
+            result: 'fail',
+            message: 'Invalid user ID',
+          };
         }
 
-        user.subscribes.push();
-        // // Update to DB
-        // const user = await User.findOneAndUpdate({ _id: id }, {
-        //   ...dataUpdate,
-        // }, {
-        //   new: true,
-        //   useFindAndModify: false,
-        // });
+        user.subscribes.push(postID);
+        await user.save();
 
-        // Clear cache movie
-        const userSessionRedisKey = createKeyRedisUserSession(id, selectedFieldsString);
-        redisRemoveAllKeysByPattern(redis, userSessionRedisKey);
-
-        return User.findById(id).select(selectedFieldsString);
+        return {
+          __typename: 'UserResult',
+          result: 'success',
+          data: {
+            __typename: 'User',
+            ...user.toObject(),
+          },
+        };
       } catch (error) {
-        console.log(error);
-        return error;
+        return {
+          __typename: 'UserResult',
+          result: 'fail',
+          message: error.message,
+        };
       }
     },
     login: async (parent, args) => {
@@ -176,7 +220,6 @@ module.exports = {
           ),
         };
       } catch (error) {
-        console.log(error);
         return {
           __typename: 'LoginFail',
           result: 'fail',
@@ -185,20 +228,10 @@ module.exports = {
       }
     },
   },
-  User: {
-    __resolveReference: async ref => {
-      const currentUser = await User.findOne({ _id: ref._id });
-      return currentUser;
-    },
-  },
   Query: {
     users: async () => {
       try {
         const users = await User.find().lean();
-
-        // const { redis } = context;
-        // const userSessionRedisKey = createKeyRedisUserSession(user.id, selectedFieldsString);
-        // redisSet(redis, userSessionRedisKey, user, EXPIRATION_TIME_REDIS_CACHE);
 
         return {
           __typename: 'UserResult',
@@ -209,8 +242,11 @@ module.exports = {
           },
         };
       } catch (error) {
-        console.log(error);
-        return error;
+        return {
+          __typename: 'UserResult',
+          result: 'fail',
+          message: error.message,
+        };
       }
     },
     user: async (parent, args) => {
@@ -234,7 +270,6 @@ module.exports = {
           },
         };
       } catch (error) {
-        console.log(error);
         return {
           __typename: 'UserResult',
           result: 'fail',

@@ -1,33 +1,20 @@
-const { UserInputError } = require('apollo-server-express');
-const axios = require('axios');
+// const { UserInputError } = require('apollo-server-express');
+// const axios = require('axios');
 const { getSelectedFieldsString } = require('../../utils/graphql');
-const { redisGet, redisSet } = require('../../utils/redis');
+// const { redisGet, redisSet } = require('../../utils/redis');
 const Post = require('../../models/post');
 
-const { EXPIRATION_TIME_REDIS_CACHE } = process.env;
+// const { EXPIRATION_TIME_REDIS_CACHE } = process.env;
 
 module.exports = {
   Mutation: {
-    addPost: async (parent, args, context, info) => {
+    addPost: async (parent, args, context) => {
       const { title, content, imageURL } = args;
-      const selectedFieldsString = getSelectedFieldsString(info);
-      const { redis, dataSources, user } = context;
+      const { user } = context;
 
       try {
-        // const { data: { user } } = await dataSources.UsersAPI.getUser(userID, authorization);
-        // if (user && user.__typename === 'UserUnauthorized') {
-        //   return {
-        //     __typename: 'PostResult',
-        //     result: 'fail',
-        //     message: user.error,
-        //   };
-        // }
-
         const post = new Post({ title, content, user: user.sub, imageURL });
         const postSaved = await post.save();
-
-        // // Clear cache movie
-        // redisRemoveAllKeysByPattern(redis, 'movie:*');
 
         return {
           __typename: 'PostResult',
@@ -38,39 +25,23 @@ module.exports = {
           },
         };
       } catch (error) {
-        console.log(error);
         return {
+          __typename: 'PostResult',
           result: 'fail',
           message: error.message,
         };
       }
     },
-    updatePost: async (parent, args, context, info) => {
-      const { _id, userID, ...dataUpdate } = args;
-      const selectedFieldsString = getSelectedFieldsString(info);
-      const { redis, dataSources } = context;
+    updatePost: async (parent, args, context) => {
+      const { _id, ...dataUpdate } = args;
 
       try {
         const post = await Post.findById(_id);
         if (!post) {
           return {
+            __typename: 'PostResult',
             result: 'fail',
             message: 'Invalid post ID',
-          };
-        }
-
-        if (post.user.toString() !== userID) {
-          return {
-            result: 'fail',
-            message: 'Post update not of this user',
-          };
-        }
-
-        const { data: { user } } = await dataSources.UsersAPI.getUser(userID);
-        if (!user) {
-          return {
-            result: 'fail',
-            message: 'Invalid user ID',
           };
         }
 
@@ -81,103 +52,95 @@ module.exports = {
         await post.save();
 
         return {
+          __typename: 'PostResult',
           result: 'success',
-          data: post,
+          data: {
+            __typename: 'Post',
+            ...post.toObject(),
+          },
         };
       } catch (error) {
         return {
+          __typename: 'PostResult',
           result: 'success',
           message: error.message,
         };
       }
     },
-    deletePost: async (parent, args, context, info) => {
-      const { _id, userID } = args;
-      const selectedFieldsString = getSelectedFieldsString(info);
-      const { redis, dataSources } = context;
+    deletePost: async (parent, args) => {
+      const { _id } = args;
 
       try {
         const post = await Post.findById(_id);
         if (!post) {
           return {
+            __typename: 'PostResult',
             result: 'fail',
             message: 'Invalid post ID',
-          };
-        }
-
-        if (post.user.toString() !== userID) {
-          return {
-            result: 'fail',
-            message: 'Post update not of this user',
-          };
-        }
-
-        const { data: { user } } = await dataSources.UsersAPI.getUser(userID);
-        if (!user) {
-          return {
-            result: 'fail',
-            message: 'Invalid user ID',
           };
         }
 
         await post.remove();
 
         return {
+          __typename: 'PostResult',
           result: 'success',
-          data: post,
+          data: {
+            __typename: 'Post',
+            ...post.toObject(),
+          },
         };
       } catch (error) {
         return {
-          result: 'success',
+          __typename: 'PostResult',
+          result: 'fail',
           message: error.message,
         };
       }
     },
-    clapPost: async (parent, args, context, info) => {
-      const { postID, userID } = args;
-      const selectedFieldsString = getSelectedFieldsString(info);
-      const { redis, dataSources } = context;
+    clapPost: async (parent, args, context) => {
+      const { _id } = args;
+      const { user } = context;
 
       try {
-        const post = await Post.findById(postID);
+        const post = await Post.findById(_id);
         if (!post) {
           return {
+            __typename: 'PostResult',
             result: 'fail',
             message: 'Invalid post ID',
           };
         }
 
-        if (post.user.toString() === userID) {
+        if (post.user.toString() === user.sub) {
           return {
+            __typename: 'PostResult',
             result: 'fail',
             message: 'Cannot clap myself',
           };
         }
 
-        const { data: { user } } = await dataSources.UsersAPI.getUser(userID);
-        if (!user) {
-          return {
-            result: 'fail',
-            message: 'Invalid user ID',
-          };
-        }
-
-        const indexUserID = post.clap.findIndex(clapUserID => clapUserID.toString() === userID);
+        const indexUserID = post.clap.findIndex(clapUserID => clapUserID.toString() === user.sub);
         if (indexUserID !== -1) {
           post.clap.splice(indexUserID, 1);
         } else {
-          post.clap.push(userID);
+          post.clap.push(user.sub);
         }
 
         await post.save();
 
         return {
+          __typename: 'PostResult',
           result: 'success',
-          data: post,
+          data: {
+            __typename: 'Post',
+            ...post.toObject(),
+          },
         };
       } catch (error) {
         return {
-          result: 'success',
+          __typename: 'PostResult',
+          result: 'fail',
           message: error.message,
         };
       }
@@ -236,22 +199,10 @@ module.exports = {
     },
   },
   Post: {
-    __resolveReference: async ref => {
-      const currentPost = await Post.findOne({ _id: ref._id });
-      return currentPost;
-    },
+    // __resolveReference: async ref => {
+    //   const currentPost = await Post.findOne({ _id: ref._id });
+    //   return currentPost;
+    // },
     user: post => ({ __typename: 'User', _id: post.user }),
-  },
-  User: {
-    posts: user => Post.find({
-      _id: {
-        $in: user.posts,
-      },
-    }),
-    subscribes: user => Post.find({
-      _id: {
-        $in: user.subscribes,
-      },
-    }),
   },
 };

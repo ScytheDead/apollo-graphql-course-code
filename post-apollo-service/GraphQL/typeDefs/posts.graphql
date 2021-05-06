@@ -1,20 +1,19 @@
 extend type Query {
   posts(start: Int = 0, length: Int = 10, sortByProperty: String = "created_at", isSortASC: Boolean = false): PostResponse # @cacheControl(maxAge: 500)
-  post(id: ID!): PostResponse # @cacheControl(maxAge: 500)
+  post(id: ID!): PostResponse 
 }
 
 extend type Mutation {
   addPost(title: String!, content: String!, imageURL: String): PostResponse
   updatePost(
     _id: ID!
-    userID: String!
     title: String
     content: String
     imageURL: String
     status: AllowedPostStatus
   ): PostResponse
-  deletePost(_id: ID!, userID: String!): PostResponse
-  clapPost(postID: String!, userID: String!): PostResponse
+  deletePost(_id: ID!): PostResponse
+  clapPost(_id: ID!): PostResponse
 }
 
 enum AllowedPostStatus {
@@ -55,7 +54,8 @@ type PostUnauthorized {
 
 union PostData = Post | ListPost
 
-type ListPost {
+type ListPost @key(fields: "user"){
+  user: ID!
   posts: [Post]
 }
 

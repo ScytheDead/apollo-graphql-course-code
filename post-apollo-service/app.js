@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const { ApolloServer } = require('apollo-server-express');
 const { applyMiddleware } = require('graphql-middleware');
+const { addResolversToSchema } = require('apollo-graphql');
 const { buildFederatedSchema } = require('@apollo/federation');
 const Redis = require('ioredis');
 require('dotenv').config();
@@ -11,6 +12,7 @@ require('dotenv').config();
 const typeDefs = require('./GraphQL');
 const resolvers = require('./GraphQL/resolvers');
 const { permissions } = require('./GraphQL/permissions');
+const { postReference } = require('./GraphQL/resolvers/reference.resolver');
 const UsersAPI = require('./datasources/UsersAPI');
 
 // Setup connect to MongoDB Atlas database
@@ -36,12 +38,15 @@ app.use(cors());
 
 app.listen(process.env.PORT, console.log(`App running with port ${process.env.PORT}!`));
 
+const schema = applyMiddleware(
+  buildFederatedSchema([{ typeDefs, resolvers }]),
+  permissions,
+);
+addResolversToSchema(schema, postReference);
+
 // Create new instance Apollo Server
 const server = new ApolloServer({
-  schema: applyMiddleware(
-    buildFederatedSchema([{ typeDefs, resolvers }]),
-    permissions,
-  ),
+  schema,
   // typeDefs,
   // resolvers,
   subscriptions: {
