@@ -1,3 +1,3 @@
 # Assigment 1
 
-Medium Clone
+Medium Clone Project
