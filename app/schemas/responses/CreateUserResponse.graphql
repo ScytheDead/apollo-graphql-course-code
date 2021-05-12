@@ -1,0 +1,8 @@
+type CreateUserResponse {
+  isSuccess: Boolean
+  message: String
+  data: User
+  user: User
+}
+
+

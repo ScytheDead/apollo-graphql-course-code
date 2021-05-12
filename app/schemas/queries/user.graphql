@@ -1,0 +1,4 @@
+extend type Query {
+  user(_id: ID!): UserResponse
+  users(filter: userFilterInput, limit: Int): UsersResponse
+}

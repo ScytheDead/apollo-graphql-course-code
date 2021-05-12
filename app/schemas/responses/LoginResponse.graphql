@@ -1,0 +1,6 @@
+type LoginResponse {
+  isSuccess: Boolean
+  message: String
+  user: User
+  accessToken: String
+}

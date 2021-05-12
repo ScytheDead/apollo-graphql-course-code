@@ -1,0 +1,11 @@
+type User {
+  _id: ID!
+  username: String
+  email: String
+  role: String
+  birthday: Date
+  firstName: String
+  lastName: String
+  isActive: Boolean
+  createdAt: Date
+}

@@ -1,0 +1,11 @@
+type UserResponse {
+  isSuccess: Boolean
+  message: String
+  user: User
+}
+
+type UsersResponse {
+  isSuccess: Boolean
+  message: String
+  users: [User]
+}
