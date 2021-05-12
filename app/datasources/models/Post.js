@@ -13,17 +13,11 @@ const PostSchema = mongoose.Schema({
     ref: 'user',
   },
   isPublic: { type: Boolean, default: false },
+
   numClap: { type: Number, default: 0 },
-  claps: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    count: {
-      type: Number,
-      require: true,
-      default: 1,
-    },
+  clapers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'claper',
   }],
 }, { timestamps: true });
 

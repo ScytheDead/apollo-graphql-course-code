@@ -11,10 +11,6 @@ const UserSchema = mongoose.Schema({
     unique: true,
     require: true,
   },
-  password: {
-    type: String,
-    required: true,
-  },
   salt: {
     type: String,
   },
