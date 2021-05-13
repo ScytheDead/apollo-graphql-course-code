@@ -1,47 +1,63 @@
 const argon2 = require('argon2');
 const randomstring = require('randomstring');
 const jwt = require('jsonwebtoken');
+const { authenticateStore: redis } = require('../../utils/redis/stores');
+const utils = require('../../utils/controllers');
 
 const { User } = require('../../models');
 
 async function login(args, context, info) {
   const { username, password } = args.input;
+  const fieldsSelected = utils.getFieldsSelection(info, 'user');
+  fieldsSelected.hash = 1;
 
-  if (!username.trim() || !password.trim()) {
+  try {
+    if (!username.trim() || !password.trim()) {
+      return {
+        isSuccess: false,
+        message: 'Invalid input',
+      };
+    }
+
+    const user = await User.findOne({ username }, { ...fieldsSelected });
+    if (!user) {
+      return {
+        isSuccess: false,
+        message: 'Username is not exists',
+      };
+    }
+
+    const { _id, hash } = user;
+    const verify = await argon2.verify(hash, password);
+    if (!verify) {
+      return {
+        isSuccess: false,
+        message: 'Username or password is incorrect',
+      };
+    }
+
+    const userResponse = user.toObject();
+    delete userResponse.hash;
+
+    const accessToken = randomstring.generate(200) + _id;
+    redis.setAsync(
+      accessToken,
+      JSON.stringify(userResponse),
+      process.env.EXPIRATION_TIME_TYPE,
+      process.env.EXPIRATION_TIME_REDIS_CACHE,
+    );
+
+    return {
+      isSuccess: true,
+      user,
+      accessToken,
+    };
+  } catch (error) {
     return {
       isSuccess: false,
-      message: 'Invalid input',
+      message: error.message,
     };
   }
-
-  const user = await User.findOne({ username });
-  if (!user) {
-    return {
-      isSuccess: false,
-      message: 'Username is not exists',
-    };
-  }
-
-  const { _id, hash, email, firstName, lastName, role, birthday, isActive } = user;
-  const verify = await argon2.verify(hash, password);
-  if (!verify) {
-    return {
-      isSuccess: false,
-      message: 'Username or password is incorrect',
-    };
-  }
-
-  return {
-    isSuccess: true,
-    user,
-    accessToken: jwt.sign(
-      { data: JSON.stringify({ username, email, firstName, lastName, role, birthday, isActive }) },
-      process.env.JWT_SECRET,
-      { algorithm: process.env.JWT_ALGORITHM_ENCRYPTION,
-        subject: _id.toString(),
-        expiresIn: process.env.JWT_EXPIRE_TIME },
-    ),
-  };
 }
 
 async function createUser(args, context, info) {
@@ -81,11 +97,11 @@ async function createUser(args, context, info) {
       hash,
       role,
     });
-    const userSaved = await newUser.save();
+    const savedUser = await newUser.save();
 
     return {
       isSuccess: true,
-      user: userSaved,
+      user: savedUser,
     };
   } catch (error) {
     return {
