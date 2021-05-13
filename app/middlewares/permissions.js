@@ -1,4 +1,4 @@
-const { rule, shield } = require('graphql-shield');
+const { rule, shield, allow } = require('graphql-shield');
 
 const isAuthenticated = rule()((parent, args, { user }) => user !== null);
 
@@ -10,12 +10,13 @@ const permissions = shield(
     },
 
     Mutation: {
-
+      createUser: allow,
+      login: allow,
     },
   },
   {
     fallbackError: {
-      result: false,
+      isSuccess: false,
       message: 'Not Authorised!',
     },
   },

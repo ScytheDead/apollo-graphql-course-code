@@ -2,12 +2,6 @@ const { User } = require('../../models');
 const utils = require('../../utils/controllers');
 
 async function getUsers(args, context, info) {
-  if (!context.user) {
-    return {
-      isSuccess: false,
-      message: 'Not Authorised!',
-    };
-  }
   const { filter, limit = 10 } = args;
   const fieldsSelected = utils.getFieldsSelection(info, 'users');
   const filterCondition = {};
@@ -41,13 +35,6 @@ async function getUsers(args, context, info) {
 
 async function getUser(args, context, info) {
   try {
-    if (!context.user) {
-      return {
-        isSuccess: false,
-        message: 'Not Authorised!',
-      };
-    }
-
     const { _id } = args;
     const fieldsSelected = utils.getFieldsSelection(info, 'user');
     const user = await User.findOne({ _id }, { ...fieldsSelected });
