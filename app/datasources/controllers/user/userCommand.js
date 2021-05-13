@@ -1,6 +1,5 @@
 const argon2 = require('argon2');
 const randomstring = require('randomstring');
-const jwt = require('jsonwebtoken');
 const { authenticateStore: redis } = require('../../utils/redis/stores');
 const utils = require('../../utils/controllers');
 
@@ -39,7 +38,7 @@ async function login(args, context, info) {
     const userResponse = user.toObject();
     delete userResponse.hash;
 
-    const accessToken = randomstring.generate(200) + _id;
+    const accessToken = randomstring.generate(100) + _id + randomstring.generate(100);
     redis.setAsync(
       accessToken,
       JSON.stringify(userResponse),
@@ -85,8 +84,6 @@ async function createUser(args, context, info) {
       };
     }
 
-    // const salt = randomstring.generate(20);
-    // const passwordSalt = password + salt;
     const hash = await argon2.hash(password);
 
     const newUser = new User({
