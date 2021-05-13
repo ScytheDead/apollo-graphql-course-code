@@ -18,7 +18,7 @@ async function login(args, context, info) {
       };
     }
 
-    const user = await User.findOne({ username }, { ...fieldsSelected });
+    const user = await User.findOne({ username }, { ...fieldsSelected }).lean();
     if (!user) {
       return {
         isSuccess: false,
@@ -35,13 +35,12 @@ async function login(args, context, info) {
       };
     }
 
-    const userResponse = user.toObject();
-    delete userResponse.hash;
+    delete user.hash;
 
     const accessToken = randomstring.generate(100) + _id + randomstring.generate(100);
     redis.setAsync(
       accessToken,
-      JSON.stringify(userResponse),
+      JSON.stringify(user),
       process.env.EXPIRATION_TIME_TYPE,
       process.env.EXPIRATION_TIME_REDIS_CACHE,
     );
