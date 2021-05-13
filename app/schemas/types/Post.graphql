@@ -1,0 +1,10 @@
+type Post {
+  _id: ID!
+  title: String
+  description: String
+  content: String
+  owner: User
+  isPublic: Boolean
+  numClap: Int
+  createdAt: Date
+}

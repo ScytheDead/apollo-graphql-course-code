@@ -1,6 +1,7 @@
 const express = require('express');
 const { ApolloServer, makeExecutableSchema } = require('apollo-server-express');
 const { applyMiddleware } = require('graphql-middleware');
+const { constraintDirective, constraintDirectiveTypeDefs } = require('graphql-constraint-directive');
 
 const datasources = require('./datasources');
 const typeDefs = require('./schemas');
@@ -14,8 +15,9 @@ app.use(checkAuth);
 const server = new ApolloServer({
   schema: applyMiddleware(
     makeExecutableSchema({
-      typeDefs,
+      typeDefs: [constraintDirectiveTypeDefs, typeDefs],
       resolvers,
+      schemaTransforms: [constraintDirective()],
     }),
     permissions,
   ),

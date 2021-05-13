@@ -1,0 +1,3 @@
+type Mutation {
+  clapPost(_id: ID!): PostResponse
+}

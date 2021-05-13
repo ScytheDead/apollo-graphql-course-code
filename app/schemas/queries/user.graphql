@@ -1,4 +1,4 @@
 type Query {
   user(_id: ID!): UserResponse
-  users(filter: userFilterInput, limit: Int): UsersResponse
+  users(filter: UserFilterInput, limit: Int): UsersResponse
 }

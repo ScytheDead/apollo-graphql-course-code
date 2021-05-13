@@ -84,15 +84,9 @@ async function createUser(args, context, info) {
     }
 
     const hash = await argon2.hash(password);
+    args.input.hash = hash;
 
-    const newUser = new User({
-      username,
-      firstName,
-      lastName,
-      email,
-      hash,
-      role,
-    });
+    const newUser = new User(args.input);
     const savedUser = await newUser.save();
 
     return {

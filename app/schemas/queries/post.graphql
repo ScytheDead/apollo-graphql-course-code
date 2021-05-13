@@ -1,0 +1,4 @@
+type Query {
+  post(_id: ID!): PostResponse 
+  posts(filter: PostFilterInput, limit: Int = 10): PostsResponse
+}

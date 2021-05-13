@@ -1,4 +1,4 @@
-input userFilterInput {
+input UserFilterInput {
   username: String
   name: String
   email: String

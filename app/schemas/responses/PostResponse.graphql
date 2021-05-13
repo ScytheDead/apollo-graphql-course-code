@@ -1,0 +1,11 @@
+type PostResponse {
+  isSuccess: Boolean
+  message: String
+  post: Post
+}
+
+type PostsResponse {
+  isSuccess: Boolean
+  message: String
+  posts: [Post]
+}

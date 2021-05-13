@@ -1,10 +1,10 @@
 const _ = require('lodash');
-const { User } = require('../../models');
+const { Post, Clap } = require('../../models');
 const utils = require('../../utils/controllers');
 
-async function getUsers(args, context, info) {
+async function getPosts(args, context, info) {
   const { filter, limit = 10 } = args;
-  const fieldsSelected = utils.getFieldsSelection(info, 'users');
+  const fieldsSelected = utils.getFieldsSelection(info, 'posts');
 
   const filterCondition = {};
   if (_.isObject(filter)) {
@@ -14,13 +14,13 @@ async function getUsers(args, context, info) {
   }
 
   try {
-    const users = await User.find(filterCondition, { ...fieldsSelected }).sort({ _id: 1 }).limit(limit);
-    const lastId = users[users.length - 1] && users[users.length - 1]._id;
+    const posts = await Post.find(filterCondition, { ...fieldsSelected }).sort({ _id: 1 }).limit(limit).populate('owner');
+    const lastId = posts[posts.length - 1] && posts[posts.length - 1]._id;
 
     return {
       isSuccess: true,
       lastId,
-      users,
+      posts,
     };
   } catch (error) {
     return {
@@ -30,21 +30,21 @@ async function getUsers(args, context, info) {
   }
 }
 
-async function getUser(args, context, info) {
+async function getPost(args, context, info) {
   try {
     const { _id } = args;
-    const fieldsSelected = utils.getFieldsSelection(info, 'user');
-    const user = await User.findOne({ _id }, { ...fieldsSelected });
-    if (!user) {
+    const fieldsSelected = utils.getFieldsSelection(info, 'post');
+    const post = await Post.findById(_id, { ...fieldsSelected }).populate('owner');
+    if (!post) {
       return {
         isSuccess: false,
-        message: 'Invalid user ID',
+        message: 'Invalid post ID',
       };
     }
 
     return {
       isSuccess: true,
-      user,
+      post,
     };
   } catch (error) {
     return {
@@ -55,6 +55,6 @@ async function getUser(args, context, info) {
 }
 
 module.exports = {
-  getUsers,
-  getUser,
+  getPosts,
+  getPost,
 };

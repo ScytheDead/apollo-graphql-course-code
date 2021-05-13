@@ -1,0 +1,8 @@
+input PostFilterInput {
+  title: String
+  description: String
+  content: String
+  owner: String
+
+  lastId: ID
+}
