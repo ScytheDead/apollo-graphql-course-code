@@ -4,7 +4,7 @@ const utils = require('../../utils/controllers');
 async function getUsers(args, context, info) {
   if (!context.user) {
     return {
-      result: 'fail',
+      isSuccess: false,
       message: 'Not Authorised!',
     };
   }
@@ -43,7 +43,7 @@ async function getUser(args, context, info) {
   try {
     if (!context.user) {
       return {
-        result: 'fail',
+        isSuccess: false,
         message: 'Not Authorised!',
       };
     }

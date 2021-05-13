@@ -15,7 +15,7 @@ const permissions = shield(
   },
   {
     fallbackError: {
-      result: 'fail',
+      result: false,
       message: 'Not Authorised!',
     },
   },
