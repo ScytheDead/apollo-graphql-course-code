@@ -7,5 +7,6 @@ type PostResponse {
 type PostsResponse {
   isSuccess: Boolean
   message: String
+  lastId: String
   posts: [Post]
 }

@@ -1,14 +1,14 @@
 const _ = require('lodash');
 const { User } = require('../../models');
-const utils = require('../../utils/controllers');
+const { getFields } = require('../../utils/controllers');
 
 async function getUsers(args, context, info) {
   const { filter, limit = 10 } = args;
-  const fieldsSelected = utils.getFieldsSelection(info, 'users');
+  const fieldsSelected = getFields(info, 'users');
 
   const conditions = _.pick(filter, ['role']);
   if (filter.username) {
-    conditions.username = { $regex: filter.username, $option: 'i' };
+    conditions.username = { $regex: filter.username, $options: 'i' };
   }
 
   if (filter.name) {
@@ -19,7 +19,7 @@ async function getUsers(args, context, info) {
   }
 
   if (filter.email) {
-    conditions.email = { $regex: filter.email, $option: 'i' };
+    conditions.email = { $regex: filter.email, $options: 'i' };
   }
 
   if (filter.lastId) {
@@ -46,10 +46,10 @@ async function getUsers(args, context, info) {
 async function getUser(args, context, info) {
   try {
     const { _id } = args;
-    const user = await User.findOne({ _id }, utils.getFieldsSelection(info, 'user'));
+    const user = await User.findOne({ _id }, getFields(info, 'user')).lean();
 
     return {
-      isSuccess: true,
+      isSuccess: !!user,
       user,
     };
   } catch (error) {

@@ -1,24 +1,17 @@
 const argon2 = require('argon2');
 const randomstring = require('randomstring');
 const { authenticateStore: redis } = require('../../utils/redis/stores');
-const utils = require('../../utils/controllers');
+const { getFields } = require('../../utils/controllers');
 
 const { User } = require('../../models');
 
 async function login(args, context, info) {
-  const { username, password } = args.input;
-  const fieldsSelected = utils.getFieldsSelection(info, 'user');
-  fieldsSelected.hash = 1;
-
   try {
-    if (!username.trim() || !password.trim()) {
-      return {
-        isSuccess: false,
-        message: 'Invalid input',
-      };
-    }
+    const { username, password } = args.input;
+    const fieldsSelected = getFields(info, 'user');
+    fieldsSelected.hash = 1;
 
-    const user = await User.findOne({ username }, { ...fieldsSelected }).lean();
+    const user = await User.findOne({ username }, fieldsSelected).lean();
     if (!user) {
       return {
         isSuccess: false,
@@ -86,7 +79,46 @@ async function createUser(args) {
   }
 }
 
+async function updateUser(args, context, info) {
+  try {
+    const { input } = args;
+    const user = await User.findByIdAndUpdate(
+      { _id: context.user._id },
+      input,
+      { fields: getFields(info, 'user'), new: true },
+    );
+
+    return {
+      isSuccess: !!user,
+      user,
+    };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      message: error.message,
+    };
+  }
+}
+
+async function deleteUser(args) {
+  try {
+    const { _id } = args;
+    const user = await User.deleteOne({ _id });
+
+    return {
+      isSuccess: !!user.deletedCount,
+    };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      message: error.message,
+    };
+  }
+}
+
 module.exports = {
   login,
   createUser,
+  updateUser,
+  deleteUser,
 };

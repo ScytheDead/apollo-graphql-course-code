@@ -1,26 +1,27 @@
 const _ = require('lodash');
+const { ObjectId } = require('mongoose').Types;
 const { Post } = require('../../models');
-const utils = require('../../utils/controllers');
+const { getFields } = require('../../utils/controllers');
 
 async function getPosts(args, context, info) {
   const { filter, limit = 10 } = args;
-  const fieldsSelected = utils.getFieldsSelection(info, 'posts');
+  const fieldsSelected = getFields(info, 'posts');
 
   const conditions = _.pick(filter, ['isPublic', 'owner']);
   if (filter.title) {
-    conditions.title = { $regex: filter.title, $option: 'i' };
+    conditions.title = { $regex: filter.title, $options: 'i' };
   }
 
   if (filter.content) {
-    conditions.content = { $regex: filter.title, $option: 'i' };
+    conditions.content = { $regex: filter.title, $options: 'i' };
   }
 
   if (filter.description) {
-    conditions.description = { $regex: filter.title, $option: 'i' };
+    conditions.description = { $regex: filter.title, $options: 'i' };
   }
 
   if (filter.lastId) {
-    conditions._id = { $gt: filter.lastId };
+    conditions._id = { $gt: ObjectId(filter.lastId) };
   }
 
   try {
@@ -43,11 +44,10 @@ async function getPosts(args, context, info) {
 async function getPost(args, context, info) {
   try {
     const { _id } = args;
-    const fieldsSelected = utils.getFieldsSelection(info, 'post');
-    const post = await Post.findById(_id, fieldsSelected);
+    const post = await Post.findById(_id, getFields(info, 'post')).lean();
 
     return {
-      isSuccess: true,
+      isSuccess: !!post,
       post,
     };
   } catch (error) {
