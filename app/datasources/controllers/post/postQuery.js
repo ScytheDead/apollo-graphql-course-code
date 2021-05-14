@@ -42,7 +42,7 @@ async function getPost(args, context, info) {
     const post = await Post.findById(_id, getFields(info, 'post')).lean();
 
     return {
-      isSuccess: !!post,
+      isSuccess: true,
       post,
     };
   } catch (error) {

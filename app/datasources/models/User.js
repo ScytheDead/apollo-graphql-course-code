@@ -30,7 +30,6 @@ const UserSchema = mongoose.Schema({
     enums: ['User', 'Admin'],
   },
   birthday: { type: Date, default: Date.now },
-
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

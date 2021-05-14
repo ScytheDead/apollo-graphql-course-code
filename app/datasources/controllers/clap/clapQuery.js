@@ -24,7 +24,7 @@ async function getClap(args, info) {
     const clap = await models.Clap.findById(_id, getFields(info, 'clap')).lean();
 
     return {
-      isSuccess: !!clap,
+      isSuccess: true,
       clap,
     };
   } catch (error) {
