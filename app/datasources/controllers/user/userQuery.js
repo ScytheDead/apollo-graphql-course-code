@@ -22,7 +22,6 @@ async function getUsers(args, context, info) {
     if (filter.lastId) {
       conditions._id = { $gt: filter.lastId };
     }
-    console.log(conditions);
     const users = await User.find(conditions, fieldsSelected).sort({ _id: 1 }).limit(limit);
     const lastId = users[users.length - 1] && users[users.length - 1]._id;
 
@@ -32,7 +31,6 @@ async function getUsers(args, context, info) {
       users,
     };
   } catch (error) {
-    console.log();
     return {
       isSuccess: false,
       message: error.message,
