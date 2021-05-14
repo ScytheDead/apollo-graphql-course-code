@@ -1,0 +1,11 @@
+type ClapResponse {
+  isSuccess: Boolean
+  message: String
+  clap: Clap
+}
+
+type ClapsResponse {
+  isSuccess: Boolean
+  message: String
+  claps: [Clap]
+}

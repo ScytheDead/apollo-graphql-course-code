@@ -18,9 +18,21 @@ async function getPosts(parent, args, context, info) {
   return dataSources.getPosts(args, context, info);
 }
 
+async function getClap(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.getClap(args, info);
+}
+
+async function getClapOfPost(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.getClapOfPost(args, context, info);
+}
+
 module.exports = {
   user: getUser,
   users: getUsers,
   post: getPost,
   posts: getPosts,
+  getClap,
+  getClapOfPost,
 };

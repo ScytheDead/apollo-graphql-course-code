@@ -1,0 +1,3 @@
+input ClapFilterInput {
+  post: ID
+}

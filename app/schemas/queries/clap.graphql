@@ -1,0 +1,4 @@
+type Query {
+  getClapOfPost(filter: ClapFilterInput, limit: Int = 10): ClapsResponse
+  getClap(_id: ID!): ClapResponse
+}

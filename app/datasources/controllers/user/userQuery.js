@@ -3,30 +3,25 @@ const { User } = require('../../models');
 const { getFields } = require('../../utils/controllers');
 
 async function getUsers(args, context, info) {
-  const { filter, limit = 10 } = args;
-  const fieldsSelected = getFields(info, 'users');
-
-  const conditions = _.pick(filter, ['role']);
-  if (filter.username) {
-    conditions.username = { $regex: filter.username, $options: 'i' };
-  }
-
-  if (filter.name) {
-    conditions.$or = [
-      { firstName: { $regex: filter.name, $option: 'i' } },
-      { lastName: { $regex: filter.name, $option: 'i' } },
-    ];
-  }
-
-  if (filter.email) {
-    conditions.email = { $regex: filter.email, $options: 'i' };
-  }
-
-  if (filter.lastId) {
-    conditions._id = { $gt: filter.lastId };
-  }
-
   try {
+    const { filter, limit = 10 } = args;
+    const fieldsSelected = getFields(info, 'users');
+    const conditions = _.pick(filter, ['role']);
+    if (filter.username) {
+      conditions.username = { $regex: filter.username, $options: 'i' };
+    }
+    if (filter.name) {
+      conditions.$or = [
+        { firstName: { $regex: filter.name, $option: 'i' } },
+        { lastName: { $regex: filter.name, $option: 'i' } },
+      ];
+    }
+    if (filter.email) {
+      conditions.email = { $regex: filter.email, $options: 'i' };
+    }
+    if (filter.lastId) {
+      conditions._id = { $gt: filter.lastId };
+    }
     const users = await User.find(conditions, fieldsSelected).sort({ _id: 1 }).limit(limit);
     const lastId = users[users.length - 1] && users[users.length - 1]._id;
 
