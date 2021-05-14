@@ -5,6 +5,6 @@ type Post {
   content: String
   owner: User
   isPublic: Boolean
-  numClap: Int
+  clapQuantity: Int
   createdAt: Date
 }

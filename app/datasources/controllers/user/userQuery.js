@@ -6,15 +6,28 @@ async function getUsers(args, context, info) {
   const { filter, limit = 10 } = args;
   const fieldsSelected = utils.getFieldsSelection(info, 'users');
 
-  const filterCondition = {};
-  if (_.isObject(filter)) {
-    for (const key in filter) {
-      filterCondition[key] = { $regex: `.*${filter[key]}.*` };
-    }
+  const conditions = _.pick(filter, ['role']);
+  if (filter.username) {
+    conditions.username = { $regex: filter.username, $option: 'i' };
+  }
+
+  if (filter.name) {
+    conditions.$or = [
+      { firstName: { $regex: filter.name, $option: 'i' } },
+      { lastName: { $regex: filter.name, $option: 'i' } },
+    ];
+  }
+
+  if (filter.email) {
+    conditions.email = { $regex: filter.email, $option: 'i' };
+  }
+
+  if (filter.lastId) {
+    conditions._id = { $gt: filter.lastId };
   }
 
   try {
-    const users = await User.find(filterCondition, { ...fieldsSelected }).sort({ _id: 1 }).limit(limit);
+    const users = await User.find(conditions, fieldsSelected).sort({ _id: 1 }).limit(limit);
     const lastId = users[users.length - 1] && users[users.length - 1]._id;
 
     return {
@@ -33,14 +46,7 @@ async function getUsers(args, context, info) {
 async function getUser(args, context, info) {
   try {
     const { _id } = args;
-    const fieldsSelected = utils.getFieldsSelection(info, 'user');
-    const user = await User.findOne({ _id }, { ...fieldsSelected });
-    if (!user) {
-      return {
-        isSuccess: false,
-        message: 'Invalid user ID',
-      };
-    }
+    const user = await User.findOne({ _id }, utils.getFieldsSelection(info, 'user'));
 
     return {
       isSuccess: true,

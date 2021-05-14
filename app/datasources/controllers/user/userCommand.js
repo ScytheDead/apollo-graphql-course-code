@@ -58,25 +58,12 @@ async function login(args, context, info) {
   }
 }
 
-async function createUser(args, context, info) {
-  let { username, password, firstName, lastName, email, role } = args.input;
-
-  username = username.trim();
-  firstName = firstName.trim();
-  lastName = lastName.trim();
-  email = email.trim();
-  role = role.trim();
-
-  if (!username || !password.trim() || !firstName || !lastName || !email || !role) {
-    return {
-      isSuccess: false,
-      message: 'Invalid input',
-    };
-  }
+async function createUser(args) {
+  const { username, password, email } = args.input;
 
   try {
-    const user = await User.findOne({ $or: [{ username }, { email }] });
-    if (user) {
+    const foundUser = await User.count({ $or: [{ username }, { email }] });
+    if (foundUser) {
       return {
         isSuccess: false,
         message: 'Username or email already exists',
@@ -85,13 +72,11 @@ async function createUser(args, context, info) {
 
     const hash = await argon2.hash(password);
     args.input.hash = hash;
-
-    const newUser = new User(args.input);
-    const savedUser = await newUser.save();
+    const createdUser = await User.create(args.input);
 
     return {
       isSuccess: true,
-      user: savedUser,
+      user: createdUser,
     };
   } catch (error) {
     return {

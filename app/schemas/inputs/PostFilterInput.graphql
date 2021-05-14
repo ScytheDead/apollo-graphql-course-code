@@ -3,6 +3,5 @@ input PostFilterInput {
   description: String
   content: String
   owner: String
-
   lastId: ID
 }

@@ -10,7 +10,7 @@ const ClapSchema = mongoose.Schema({
     type: ObjectId,
     ref: 'user',
   },
-  count: { type: Number, default: 1 },
+  count: { type: Number, default: 0 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('clap', ClapSchema);

@@ -1,4 +1,4 @@
-const { authenticateStore: redis } = require('../../utils/redis/stores');
+const _ = require('lodash');
 const utils = require('../../utils/controllers');
 
 const { Post, Clap } = require('../../models');
@@ -8,8 +8,12 @@ async function clapPost(args, context, info) {
   const { _id } = args;
 
   try {
-    const post = await Post.findById(_id)
-      .populate('owner');
+    const post = await Post.findByIdAndUpdate(_id, {
+      clapQuantity: { $inc: 1 },
+    }, {
+      fields: utils.getFieldsSelection(info, 'post'),
+      new: true,
+    }).lean();
 
     if (!post) {
       return {
@@ -18,18 +22,11 @@ async function clapPost(args, context, info) {
       };
     }
 
-    post.numClap += 1;
-    await post.save();
-
-    let clap = await Clap.findOne({ post: _id, user: user._id });
-    if (clap) {
-      clap.count += 1;
-    } else {
-      clap = new Clap({
-        post: _id, user: user._id,
-      });
-    }
-    await clap.save();
+    await Clap.updateOne(
+      { post: _id, user: user._id },
+      { count: { $inc: 1 } },
+      { upsert: true, setDefaultsOnInsert: true },
+    );
 
     return {
       isSuccess: true,
@@ -43,39 +40,15 @@ async function clapPost(args, context, info) {
   }
 }
 
-async function createPost(args, context, info) {
-  let { title, description, content } = args.input;
+async function createPost(args, context) {
   const { user } = context;
-
-  title = title.trim();
-  description = description.trim();
-  content = content.trim();
-
-  if (!title || !description || !content) {
-    return {
-      isSuccess: false,
-      message: 'Invalid input',
-    };
-  }
-
   try {
-    const post = await Post.findOne({ title })
-      .populate('owner');
-    if (post) {
-      return {
-        isSuccess: false,
-        message: 'Title already exists',
-      };
-    }
-
     args.input.owner = user._id;
-    const newPost = new Post(args.input);
-    const savedPost = await newPost.save();
-    await Post.populate(savedPost, 'owner');
+    const post = await Post.create(args.input);
 
     return {
       isSuccess: true,
-      post: savedPost,
+      post,
     };
   } catch (error) {
     return {

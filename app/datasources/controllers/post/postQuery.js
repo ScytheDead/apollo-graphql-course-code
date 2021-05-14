@@ -1,20 +1,30 @@
 const _ = require('lodash');
-const { Post, Clap } = require('../../models');
+const { Post } = require('../../models');
 const utils = require('../../utils/controllers');
 
 async function getPosts(args, context, info) {
   const { filter, limit = 10 } = args;
   const fieldsSelected = utils.getFieldsSelection(info, 'posts');
 
-  const filterCondition = {};
-  if (_.isObject(filter)) {
-    for (const key in filter) {
-      filterCondition[key] = { $regex: `.*${filter[key]}.*` };
-    }
+  const conditions = _.pick(filter, ['isPublic', 'owner']);
+  if (filter.title) {
+    conditions.title = { $regex: filter.title, $option: 'i' };
+  }
+
+  if (filter.content) {
+    conditions.content = { $regex: filter.title, $option: 'i' };
+  }
+
+  if (filter.description) {
+    conditions.description = { $regex: filter.title, $option: 'i' };
+  }
+
+  if (filter.lastId) {
+    conditions._id = { $gt: filter.lastId };
   }
 
   try {
-    const posts = await Post.find(filterCondition, { ...fieldsSelected }).sort({ _id: 1 }).limit(limit).populate('owner');
+    const posts = await Post.find(conditions, fieldsSelected).sort({ _id: 1 }).limit(limit).lean();
     const lastId = posts[posts.length - 1] && posts[posts.length - 1]._id;
 
     return {
@@ -34,13 +44,7 @@ async function getPost(args, context, info) {
   try {
     const { _id } = args;
     const fieldsSelected = utils.getFieldsSelection(info, 'post');
-    const post = await Post.findById(_id, { ...fieldsSelected }).populate('owner');
-    if (!post) {
-      return {
-        isSuccess: false,
-        message: 'Invalid post ID',
-      };
-    }
+    const post = await Post.findById(_id, fieldsSelected);
 
     return {
       isSuccess: true,
