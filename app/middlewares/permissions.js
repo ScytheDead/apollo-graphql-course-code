@@ -1,6 +1,7 @@
 const { rule, shield, allow } = require('graphql-shield');
 
 const isAuthenticated = rule()((parent, args, { user }) => user !== null);
+const isAdmin = rule()((parent, args, { user }) => user && user.role === 'Admin');
 
 const permissions = shield(
   {
@@ -10,7 +11,8 @@ const permissions = shield(
     },
 
     Mutation: {
-      createUser: allow,
+      createUser: isAdmin,
+      register: allow,
       login: allow,
     },
   },

@@ -7,5 +7,6 @@ type ClapResponse {
 type ClapsResponse {
   isSuccess: Boolean
   message: String
+  lastId: String
   claps: [Clap]
 }

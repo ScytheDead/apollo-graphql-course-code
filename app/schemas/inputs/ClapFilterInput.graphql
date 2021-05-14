@@ -1,3 +1,4 @@
 input ClapFilterInput {
-  post: ID
+  post: ID!
+  lastId: String
 }

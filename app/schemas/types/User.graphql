@@ -2,7 +2,7 @@ type User {
   _id: ID!
   username: String
   email: String
-  role: String
+  role: Role
   birthday: Date
   firstName: String
   lastName: String

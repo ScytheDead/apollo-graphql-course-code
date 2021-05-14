@@ -4,10 +4,9 @@ const checkAuth = async (req, res, next) => {
   const { authorization } = req.headers;
   req.user = null;
   if (authorization) {
-    let user = await redis.getAsync(authorization);
+    const user = await redis.getAsync(authorization);
     if (user) {
-      user = JSON.parse(user);
-      req.user = user;
+      req.user = JSON.parse(user);
     }
   }
   next();

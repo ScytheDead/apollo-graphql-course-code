@@ -8,6 +8,11 @@ async function createUser(parent, args, context, info) {
   return dataSources.createUser(args, context, info);
 }
 
+async function register(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.createUser(args, context, info);
+}
+
 async function updateUser(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.updateUser(args, context, info);
@@ -29,7 +34,7 @@ async function clapPost(parent, args, context, info) {
 
 async function updatePost(parent, args, context, info) {
   const { dataSources } = context;
-  return dataSources.updatePost(args, info);
+  return dataSources.updatePost(args, context, info);
 }
 
 async function deletePost(parent, args, context) {
@@ -46,4 +51,5 @@ module.exports = {
   deleteUser,
   updatePost,
   deletePost,
+  register,
 };

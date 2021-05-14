@@ -4,6 +4,6 @@ input CreateUserInput {
     lastName: String!
     email: String!
     password: String!
-    role: String!
+    role: Role!
     birthday: Date
 }

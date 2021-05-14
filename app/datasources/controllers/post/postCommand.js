@@ -1,31 +1,25 @@
+const { ObjectId } = require('mongoose').Types;
 const { getFields } = require('../../utils/controllers');
-
 const { Post, Clap } = require('../../models');
 
-async function clapPost(args, context, info) {
+async function clapPost(args, context) {
   try {
     const { user } = context;
     const { _id } = args;
-
-    const post = await Post.findOneAndUpdate({
-      _id,
-      owner: {
-        $ne: user._id,
-      },
-    },
-    {
-      $inc: { clapQuantity: 1 },
-    }, {
-      fields: getFields(info, 'post'),
-      new: true,
-    }).lean();
-
+    const post = await Post.findById(_id).lean();
     if (!post) {
       return {
         isSuccess: false,
+        message: 'Post not found',
       };
     }
-
+    if (post.owner.toString() === user._id) {
+      return {
+        isSuccess: false,
+        message: 'You cannot clap myself',
+      };
+    }
+    await Post.updateOne({ _id }, { $inc: { clapQuantity: 1 } });
     await Clap.updateOne(
       { post: _id, user: user._id },
       { $inc: { count: 1 } },
@@ -61,15 +55,22 @@ async function createPost(args, context) {
   }
 }
 
-async function updatePost(args, info) {
+async function updatePost(args, context, info) {
   try {
     const { _id, input } = args;
+    const { _id: owner } = context.user;
     const fieldsSelected = getFields(info, 'post');
-    const post = await Post.findByIdAndUpdate(
-      { _id },
+
+    const post = await Post.findOneAndUpdate(
+      { _id, owner: ObjectId(owner) },
       input,
       { fields: fieldsSelected, new: true },
-    );
+    ).lean();
+    if (!post) {
+      return {
+        isSuccess: false,
+      };
+    }
 
     return {
       isSuccess: !!post,
@@ -94,6 +95,7 @@ async function deletePost(args, context) {
   } catch (error) {
     return {
       isSuccess: false,
+      message: error.message,
     };
   }
 }
