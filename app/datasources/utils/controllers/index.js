@@ -1,5 +1,5 @@
-const getFieldsSelection = require('./fieldsSelected');
+const getFields = require('./fieldsSelected');
 
 module.exports = {
-  getFieldsSelection,
+  getFields,
 };

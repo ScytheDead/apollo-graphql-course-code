@@ -1,5 +1,5 @@
 input UpdatePostInput {
-  title: String!
-  description: String!
-  content: String!
+  title: String
+  description: String
+  content: String
 }

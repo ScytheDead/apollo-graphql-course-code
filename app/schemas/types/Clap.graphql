@@ -1,0 +1,6 @@
+type Clap {
+  _id: ID!
+  post: Post
+  user: User
+  count: Int
+}
