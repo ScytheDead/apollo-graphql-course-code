@@ -7,5 +7,6 @@ type CommentResponse {
 type CommentsResponse {
   isSuccess: Boolean
   message: String
+  lastId: ID
   comments: [Comment]
 }

@@ -4,10 +4,15 @@ const { getFields } = require('../../utils/controllers');
 async function getCommentOfPost(args, context, info) {
   try {
     const { filter, limit = 10 } = args;
+    if (filter.lastId) {
+      filter._id = { $gt: filter.lastId };
+      delete filter.lastId;
+    }
     const comments = await models.Comment.find(filter, getFields(info, 'comments')).limit(limit).lean();
-
+    const lastId = comments[comments.length - 1]._id;
     return {
       isSuccess: true,
+      lastId,
       comments,
     };
   } catch (error) {

@@ -1,3 +1,4 @@
 input CommentFilterInput {
-  post: ID
+  post: ID!
+  lastId: ID
 }
