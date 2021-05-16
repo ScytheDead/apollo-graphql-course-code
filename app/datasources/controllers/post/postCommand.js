@@ -1,4 +1,3 @@
-const { ObjectId } = require('mongoose').Types;
 const { getFields } = require('../../utils/controllers');
 const { Post, Clap } = require('../../models');
 
@@ -62,13 +61,14 @@ async function updatePost(args, context, info) {
     const fieldsSelected = getFields(info, 'post');
 
     const post = await Post.findOneAndUpdate(
-      { _id, owner: ObjectId(owner) },
+      { _id, owner },
       input,
       { fields: fieldsSelected, new: true },
     ).lean();
     if (!post) {
       return {
         isSuccess: false,
+        message: 'Post not found'
       };
     }
 

@@ -1,0 +1,5 @@
+input CreateCommentInput {
+  post: String!
+  content: String!
+  parent: String
+}

@@ -1,0 +1,4 @@
+type Query {
+  comment(_id: ID!): CommentResponse 
+  comments(filter: CommentFilterInput, limit: Int = 10): CommentsResponse
+}

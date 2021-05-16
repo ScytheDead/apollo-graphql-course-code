@@ -1,31 +1,41 @@
-async function getUser(parent, args, context, info) {
+function getUser(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.getUser(args, context, info);
 }
 
-async function getUsers(parent, args, context, info) {
+function getUsers(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.getUsers(args, context, info);
 }
 
-async function getPost(parent, args, context, info) {
+function getPost(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.getPost(args, context, info);
 }
 
-async function getPosts(parent, args, context, info) {
+function getPosts(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.getPosts(args, context, info);
 }
 
-async function getClap(parent, args, context, info) {
+function getClap(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.getClap(args, info);
 }
 
-async function getClapOfPost(parent, args, context, info) {
+function getClapOfPost(parent, args, context, info) {
   const { dataSources } = context;
   return dataSources.getClapOfPost(args, context, info);
+}
+
+function getComment(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.getComment(args, context, info);
+}
+
+function getComments(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.getComments(args, context, info);
 }
 
 module.exports = {
@@ -35,4 +45,6 @@ module.exports = {
   posts: getPosts,
   getClap,
   getClapOfPost,
+  comment: getComment,
+  comments: getComments,
 };

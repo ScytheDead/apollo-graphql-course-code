@@ -11,6 +11,9 @@ const permissions = shield(
     },
 
     Mutation: {
+      createComment: isAuthenticated,
+      deleteComment: isAuthenticated,
+      updateComment: isAuthenticated,
       createUser: isAdmin,
       register: allow,
       login: allow,

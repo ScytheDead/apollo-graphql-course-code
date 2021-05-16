@@ -55,7 +55,7 @@ async function createUser(args) {
   const { username, password, email } = args.input;
 
   try {
-    const foundUser = await User.count({ $or: [{ username }, { email }] });
+    const foundUser = await User.countDocuments({ $or: [{ username }, { email }] });
     if (foundUser) {
       return {
         isSuccess: false,

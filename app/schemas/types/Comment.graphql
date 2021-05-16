@@ -1,0 +1,8 @@
+type Comment {
+  _id: ID!
+  post: Post
+  user: User
+  content: String
+  parent: Comment
+  createdAt: Date
+}

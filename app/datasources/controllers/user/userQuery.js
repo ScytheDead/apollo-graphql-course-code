@@ -5,7 +5,6 @@ const { getFields } = require('../../utils/controllers');
 async function getUsers(args, context, info) {
   try {
     const { filter, limit = 10 } = args;
-    const fieldsSelected = getFields(info, 'users');
     const conditions = _.pick(filter, ['role']);
     if (filter.username) {
       conditions.username = { $regex: filter.username, $options: 'i' };
@@ -22,7 +21,7 @@ async function getUsers(args, context, info) {
     if (filter.lastId) {
       conditions._id = { $gt: filter.lastId };
     }
-    const users = await User.find(conditions, fieldsSelected).sort({ _id: 1 }).limit(limit);
+    const users = await User.find(conditions, getFields(info, 'users')).limit(limit);
     const lastId = users[users.length - 1] && users[users.length - 1]._id;
 
     return {
