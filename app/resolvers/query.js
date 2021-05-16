@@ -28,6 +28,16 @@ async function getClapOfPost(parent, args, context, info) {
   return dataSources.getClapOfPost(args, context, info);
 }
 
+async function getComment(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.getComment(args, info);
+}
+
+async function getCommentOfPost(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.getCommentOfPost(args, context, info);
+}
+
 module.exports = {
   user: getUser,
   users: getUsers,
@@ -35,4 +45,6 @@ module.exports = {
   posts: getPosts,
   getClap,
   getClapOfPost,
+  getComment,
+  getCommentOfPost,
 };

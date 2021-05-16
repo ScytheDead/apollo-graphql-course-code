@@ -37,6 +37,21 @@ async function deletePost(parent, args, context) {
   return dataSources.deletePost(args, context);
 }
 
+async function createComment(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.createComment(args, context, info);
+}
+
+async function updateComment(parent, args, context, info) {
+  const { dataSources } = context;
+  return dataSources.updateComment(args, context, info);
+}
+
+async function deleteComment(parent, args, context) {
+  const { dataSources } = context;
+  return dataSources.deleteComment(args, context);
+}
+
 module.exports = {
   login,
   createUser,
@@ -46,4 +61,7 @@ module.exports = {
   deleteUser,
   updatePost,
   deletePost,
+  createComment,
+  updateComment,
+  deleteComment,
 };

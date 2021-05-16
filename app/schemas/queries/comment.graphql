@@ -1,0 +1,4 @@
+type Query {
+  getCommentOfPost(filter: CommentFilterInput, limit: Int = 10): CommentsResponse
+  getComment(_id: ID!): CommentResponse
+}

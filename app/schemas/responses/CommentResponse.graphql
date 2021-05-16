@@ -1,0 +1,11 @@
+type CommentResponse {
+  isSuccess: Boolean
+  message: String
+  comment: Comment
+}
+
+type CommentsResponse {
+  isSuccess: Boolean
+  message: String
+  comments: [Comment]
+}

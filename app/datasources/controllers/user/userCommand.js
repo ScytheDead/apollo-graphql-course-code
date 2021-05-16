@@ -1,7 +1,7 @@
 const argon2 = require('argon2');
 const randomstring = require('randomstring');
 const { authenticateStore: redis } = require('../../utils/redis/stores');
-const { getFields } = require('../../utils/controllers');
+const { getFields, createToken } = require('../../utils/controllers');
 
 const { User } = require('../../models');
 
@@ -30,13 +30,16 @@ async function login(args, context, info) {
 
     delete user.hash;
 
-    const accessToken = randomstring.generate(100) + _id + randomstring.generate(100);
-    redis.setAsync(
-      accessToken,
-      JSON.stringify(user),
-      process.env.EXPIRATION_TIME_TYPE,
-      process.env.EXPIRATION_TIME_REDIS_CACHE,
-    );
+    const accessToken = await createToken({ _id: user._id, username: user.username, role: user.role });
+    // return { isSuccess: true, message: 'you login success', accessToken, user };
+
+    // const accessToken = randomstring.generate(100) + _id + randomstring.generate(100);
+    // redis.setAsync(
+    //   accessToken,
+    //   JSON.stringify(user),
+    //   process.env.EXPIRATION_TIME_TYPE,
+    //   process.env.EXPIRATION_TIME_REDIS_CACHE,
+    // );
 
     return {
       isSuccess: true,

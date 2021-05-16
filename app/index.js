@@ -1,4 +1,8 @@
 require('dotenv').config();
+const config = require('./config');
+
+const PORT = config.port;
 const app = require('./app');
+
 // TODO: run server
-app.listen(process.env.PORT, console.log(`App running with port ${process.env.PORT}!`));
+app.listen(PORT, console.log(`App running at https://localhost:${PORT}/graphql`));
