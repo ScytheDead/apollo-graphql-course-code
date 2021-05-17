@@ -1,9 +1,8 @@
 const { getFields } = require('../../utils/controllers');
-const { Post, Clap } = require('../../models');
+const { Post, Clap, Comment } = require('../../models');
 
 async function clapPost(args, context) {
   try {
-    const { user } = context;
     const { _id } = args;
     const post = await Post.findById(_id).lean();
     if (!post) {
@@ -12,7 +11,7 @@ async function clapPost(args, context) {
         message: 'Post not found',
       };
     }
-    if (post.owner.toString() === user._id) {
+    if (post.owner.toString() === context.user._id) {
       return {
         isSuccess: false,
         message: 'You cannot clap myself',
@@ -20,7 +19,7 @@ async function clapPost(args, context) {
     }
     await Post.updateOne({ _id }, { $inc: { clapQuantity: 1 } });
     await Clap.updateOne(
-      { post: _id, user: user._id },
+      { post: _id, user: context.user._id },
       { $inc: { count: 1 } },
       { upsert: true, setDefaultsOnInsert: true },
     );
@@ -38,8 +37,7 @@ async function clapPost(args, context) {
 
 async function createPost(args, context) {
   try {
-    const { user } = context;
-    args.input.owner = user._id;
+    args.input.owner = context.user._id;
     const post = await Post.create(args.input);
 
     return {
@@ -58,17 +56,16 @@ async function updatePost(args, context, info) {
   try {
     const { _id, input } = args;
     const { _id: owner } = context.user;
-    const fieldsSelected = getFields(info, 'post');
 
     const post = await Post.findOneAndUpdate(
       { _id, owner },
       input,
-      { fields: fieldsSelected, new: true },
+      { fields: getFields(info, 'post'), new: true },
     ).lean();
     if (!post) {
       return {
         isSuccess: false,
-        message: 'Post not found'
+        message: 'Post not found',
       };
     }
 
@@ -88,6 +85,12 @@ async function deletePost(args, context) {
   try {
     args.owner = context.user._id;
     const post = await Post.deleteOne(args);
+    if (post.deletedCount) {
+      await Promise.all([
+        Comment.deleteMany({ post: args._id }),
+        Clap.deleteMany({ post: args._id }),
+      ]);
+    }
 
     return {
       isSuccess: !!post.deletedCount,

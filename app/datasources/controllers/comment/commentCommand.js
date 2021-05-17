@@ -1,10 +1,28 @@
 const { getFields } = require('../../utils/controllers');
-const { Comment } = require('../../models');
+const { Comment, Post } = require('../../models');
 
 async function createComment(args, context) {
   try {
-    const { user } = context;
-    args.input.user = user._id;
+    args.input.user = context.user._id;
+
+    const foundPost = await Post.countDocuments({ _id: args.input.post });
+    if (!foundPost) {
+      return {
+        isSuccess: false,
+        message: 'Post not found',
+      };
+    }
+
+    if (args.input.parent) {
+      const foundParent = await Comment.countDocuments({ _id: args.input.parent });
+      if (!foundParent) {
+        return {
+          isSuccess: false,
+          message: 'Parent comment not found',
+        };
+      }
+    }
+
     const comment = await Comment.create(args.input);
 
     return {
@@ -23,17 +41,16 @@ async function updateComment(args, context, info) {
   try {
     const { _id, input } = args;
     const { user } = context;
-    const fieldsSelected = getFields(info, 'comment');
 
     const comment = await Comment.findOneAndUpdate(
       { _id, user },
       input,
-      { fields: fieldsSelected, new: true },
+      { fields: getFields(info, 'comment'), new: true },
     ).lean();
     if (!comment) {
       return {
         isSuccess: false,
-        message: 'Comment not found'
+        message: 'Comment not found',
       };
     }
 
@@ -52,7 +69,7 @@ async function updateComment(args, context, info) {
 async function deleteComment(args, context) {
   try {
     args.user = context.user._id;
-    const comment = await Comment.deleteOne(args);
+    const comment = await Comment.deleteMany({ $or: [args, { parent: args._id }] });
 
     return {
       isSuccess: !!comment.deletedCount,

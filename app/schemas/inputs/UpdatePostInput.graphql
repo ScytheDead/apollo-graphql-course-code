@@ -2,4 +2,5 @@ input UpdatePostInput {
   title: String
   description: String
   content: String
+  isPublic: Boolean
 }

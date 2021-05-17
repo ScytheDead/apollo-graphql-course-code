@@ -1,5 +1,6 @@
 input CommentFilterInput {
   post: String!
   content: String
+  parent: String
   lastId: ID
 }
