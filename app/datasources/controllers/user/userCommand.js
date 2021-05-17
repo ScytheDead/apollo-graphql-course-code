@@ -29,15 +29,6 @@ async function login(args, context, info) {
     delete user.hash;
 
     const accessToken = await createToken({ _id: user._id, username: user.username, role: user.role });
-    // return { isSuccess: true, message: 'you login success', accessToken, user };
-
-    // const accessToken = randomstring.generate(100) + _id + randomstring.generate(100);
-    // redis.setAsync(
-    //   accessToken,
-    //   JSON.stringify(user),
-    //   process.env.EXPIRATION_TIME_TYPE,
-    //   process.env.EXPIRATION_TIME_REDIS_CACHE,
-    // );
 
     return {
       isSuccess: true,

@@ -1,0 +1,187 @@
+<body>
+  <div id="loginZone">
+    <label for="username">Username</label>
+    <input id="usernameId" type="text" />
+    <label for="password">Password</label>
+    <input id="passwordId" type="password" />
+    <button id="btnLogin">Login</button>
+  </div>
+
+  <div style="margin-top: 10px">
+    <input type="hidden" id="tokenId" />
+    <label for="txtPostId">PostID</label>
+    <input id="txtPostId" type="text" />
+    <button id="btnGet">Get</button>
+  </div>
+
+  <div>
+    <h2 id="titleId"></h2>
+    <h4 id="descriptionId"></h4>
+    <h4 id="contentId"></h4>
+    <h4 style="text-align: left; float: left; display: none" id="clapQuantityTxt">Clap quantity: &nbsp;</h4>
+    <h4 style="text-align: right; float: left" id="clapQuantityId"></h4>
+    <br />
+    <button style="margin-left: 5px; text-align: right; float: left; display: none" id="clapId">Clap</button>
+  </div>
+</body>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+  var socket = io();
+
+  socket.on('clap-post-response', () => {
+    const clapQuantity = parseInt(clapQuantityId.innerHTML) + 1;
+    clapQuantityId.innerHTML = clapQuantity;
+  });
+
+  clapId.onclick = async () => {
+    const postId = txtPostId.value;
+    const Authorization = tokenId.value;
+    const result = await clapPost(postId, Authorization);
+    console.log(result);
+    if (result.data.clapPost.isSuccess) {
+      socket.emit('clap-post', { postId });
+    }
+  };
+
+  btnLogin.onclick = async () => {
+    const username = usernameId.value;
+    const password = passwordId.value;
+    const result = await login(username, password);
+    console.log(result);
+    if (result.data.login.isSuccess) {
+      const {
+        user: { username: usernameDisplay },
+        accessToken,
+      } = result.data.login;
+      tokenId.value = accessToken;
+      loginZone.innerHTML = `<h2>${usernameDisplay}</h2>`;
+    }
+  };
+
+  btnGet.onclick = async () => {
+    const postId = txtPostId.value;
+    const result = await getPost(postId);
+    console.log(result);
+    if (result.data.post.isSuccess) {
+      const { title, description, content, clapQuantity } = result.data.post.post;
+
+      titleId.innerHTML = title;
+      descriptionId.innerHTML = description;
+      contentId.innerHTML = content;
+      clapQuantityId.innerHTML = clapQuantity;
+      clapId.style.display = '';
+      clapQuantityTxt.style.display = '';
+
+      socket.emit('user-join-room-post', { postId });
+    }
+  };
+
+  function login(username, password) {
+    return new Promise((resolve, reject) => {
+      fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+          mutation login ($username: String!, $password: String!) {
+            login(input: {
+              username: $username,
+              password: $password
+            }) {
+              isSuccess
+              message
+              user {
+                _id
+                username
+                email
+                role
+              }
+              accessToken
+            }
+          }
+        `,
+          variables: {
+            username,
+            password,
+          },
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          resolve(result);
+        });
+    });
+  }
+
+  function getPost(postId) {
+    return new Promise((resolve, reject) => {
+      fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+          query getPost ($id: ID!) {
+            post (_id: $id) {
+              isSuccess
+              message
+              post {
+                _id
+                title
+                description
+                content
+                owner {
+                  _id
+                  username
+                }
+                clapQuantity
+              }
+            }
+          }
+        `,
+          variables: {
+            id: postId,
+          },
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          resolve(result);
+        });
+    });
+  }
+
+  function clapPost(postId, Authorization) {
+    return new Promise((resolve, reject) => {
+      fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization,
+        },
+        body: JSON.stringify({
+          query: `
+          mutation clapPost($id: ID!) {
+            clapPost(_id: $id) {
+              isSuccess
+              message
+            }
+          }
+        `,
+          variables: {
+            id: postId,
+          },
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          resolve(result);
+        });
+    });
+  }
+</script>
