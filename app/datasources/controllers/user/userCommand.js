@@ -1,6 +1,4 @@
 const argon2 = require('argon2');
-const randomstring = require('randomstring');
-const { authenticateStore: redis } = require('../../utils/redis/stores');
 const { getFields, createToken } = require('../../utils/controllers');
 
 const { User } = require('../../models');
