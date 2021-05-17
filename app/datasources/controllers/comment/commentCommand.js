@@ -14,11 +14,18 @@ async function createComment(args, context) {
     }
 
     if (args.input.parent) {
-      const foundParent = await Comment.countDocuments({ _id: args.input.parent });
-      if (!foundParent) {
+      const parentComment = await Comment.findById({ _id: args.input.parent }).select('post').lean();
+      if (!parentComment) {
         return {
           isSuccess: false,
           message: 'Parent comment not found',
+        };
+      }
+
+      if (parentComment.post.toString() !== args.input.post) {
+        return {
+          isSuccess: false,
+          message: 'Parent comment not in this post',
         };
       }
     }
@@ -55,7 +62,7 @@ async function updateComment(args, context, info) {
     }
 
     return {
-      isSuccess: !!comment,
+      isSuccess: true,
       comment,
     };
   } catch (error) {
@@ -69,10 +76,18 @@ async function updateComment(args, context, info) {
 async function deleteComment(args, context) {
   try {
     args.user = context.user._id;
-    const comment = await Comment.deleteMany({ $or: [args, { parent: args._id }] });
+    const comment = await Comment.deleteOne(args);
+    if (!comment.deletedCount) {
+      return {
+        isSuccess: false,
+        message: 'Comment not found',
+      };
+    }
+
+    await Comment.deleteMany({ parent: args._id });
 
     return {
-      isSuccess: !!comment.deletedCount,
+      isSuccess: true,
     };
   } catch (error) {
     return {

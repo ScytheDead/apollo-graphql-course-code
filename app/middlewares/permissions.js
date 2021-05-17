@@ -15,6 +15,8 @@ const permissions = shield(
       deleteComment: isAuthenticated,
       updateComment: isAuthenticated,
       createUser: isAdmin,
+      updateUser: isAuthenticated,
+      deleteUser: isAuthenticated,
       register: allow,
       login: allow,
     },

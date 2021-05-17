@@ -1,0 +1,4 @@
+type DeletePostResponse {
+  isSuccess: Boolean
+  message: String
+}

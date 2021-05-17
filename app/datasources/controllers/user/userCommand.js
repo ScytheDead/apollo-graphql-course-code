@@ -2,6 +2,7 @@ const argon2 = require('argon2');
 const randomstring = require('randomstring');
 const { authenticateStore: redis } = require('../../utils/redis/stores');
 const { getFields } = require('../../utils/controllers');
+const { expirationTimeType, expirationTime } = require('../../../config/redis');
 
 const { User } = require('../../models');
 
@@ -34,8 +35,8 @@ async function login(args, context, info) {
     redis.setAsync(
       accessToken,
       JSON.stringify(user),
-      process.env.EXPIRATION_TIME_TYPE,
-      process.env.EXPIRATION_TIME_REDIS_CACHE,
+      expirationTimeType,
+      expirationTime,
     );
 
     return {
@@ -100,13 +101,19 @@ async function updateUser(args, context, info) {
   }
 }
 
-async function deleteUser(args) {
+async function deleteUser(args, context) {
   try {
-    const { _id } = args;
+    const { _id } = context.user;
     const user = await User.deleteOne({ _id });
+    if (!user.deletedCount) {
+      return {
+        isSuccess: false,
+        message: 'User not found',
+      };
+    }
 
     return {
-      isSuccess: !!user.deletedCount,
+      isSuccess: true,
     };
   } catch (error) {
     return {

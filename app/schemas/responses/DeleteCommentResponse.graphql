@@ -1,0 +1,4 @@
+type DeleteCommentResponse {
+  isSuccess: Boolean
+  message: String
+}

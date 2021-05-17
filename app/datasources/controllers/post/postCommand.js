@@ -70,7 +70,7 @@ async function updatePost(args, context, info) {
     }
 
     return {
-      isSuccess: !!post,
+      isSuccess: true,
       post,
     };
   } catch (error) {
@@ -85,15 +85,20 @@ async function deletePost(args, context) {
   try {
     args.owner = context.user._id;
     const post = await Post.deleteOne(args);
-    if (post.deletedCount) {
-      await Promise.all([
-        Comment.deleteMany({ post: args._id }),
-        Clap.deleteMany({ post: args._id }),
-      ]);
+    if (!post.deletedCount) {
+      return {
+        isSuccess: false,
+        message: 'Post not found',
+      };
     }
 
+    await Promise.all([
+      Comment.deleteMany({ post: args._id }),
+      Clap.deleteMany({ post: args._id }),
+    ]);
+
     return {
-      isSuccess: !!post.deletedCount,
+      isSuccess: true,
     };
   } catch (error) {
     return {

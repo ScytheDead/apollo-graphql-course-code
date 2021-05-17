@@ -10,12 +10,10 @@ async function getComments(args, context, info) {
     if (filter.content) {
       conditions.content = { $regex: filter.content, $options: 'i' };
     }
-    if (filter.parent) {
-      conditions.parent = filter.parent;
-    }
     if (filter.lastId) {
       conditions._id = { $gt: filter.lastId };
     }
+    conditions.parent = filter.parent || null;
 
     const comments = await Comment.find(conditions, getFields(info, 'comments')).limit(limit).lean();
     const lastId = comments[comments.length - 1] && comments[comments.length - 1]._id;
