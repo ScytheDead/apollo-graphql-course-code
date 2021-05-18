@@ -9,7 +9,7 @@ async function getCommentOfPost(args, context, info) {
       delete filter.lastId;
     }
     const comments = await models.Comment.find(filter, getFields(info, 'comments')).limit(limit).lean();
-    const lastId = comments[comments.length - 1]._id;
+    const lastId = comments[comments.length - 1] && comments[comments.length - 1]._id;
     return {
       isSuccess: true,
       lastId,

@@ -1,4 +1,4 @@
-<body>
+<body style="margin-left: 2rem">
   <div id="loginZone">
     <label for="username">Username</label>
     <input id="usernameId" type="text" />
@@ -7,22 +7,49 @@
     <button id="btnLogin">Login</button>
   </div>
 
+  <div id="listPosts" style="margin-top: 10px">
+    
+  </div>
+
   <div style="margin-top: 10px">
     <input type="hidden" id="tokenId" />
+    <input type="hidden" id="currentPostOwnerId" />
+    <input type="hidden" id="loginUsernameId" />
+    <input type="hidden" id="lastCommentId"/>
     <label for="txtPostId">PostID</label>
     <input id="txtPostId" type="text" />
     <button id="btnGet">Get</button>
   </div>
 
-  <div>
+  <div id="showPostId" style="display: none;">
     <h2 id="titleId"></h2>
     <h4 id="descriptionId"></h4>
     <h4 id="contentId"></h4>
-    <h4 style="text-align: left; float: left; display: none" id="clapQuantityTxt">Clap quantity: &nbsp;</h4>
+    <h4 style="text-align: left; float: left" id="clapQuantityTxt">Clap quantity: &nbsp;</h4>
     <h4 style="text-align: right; float: left" id="clapQuantityId"></h4>
     <br />
-    <button style="margin-left: 5px; text-align: right; float: left; display: none" id="clapId">Clap</button>
+    <button style="margin-left: 5px; text-align: right; float: left; display: none;" id="clapId">Clap</button>
+
+    <div>
+      <h1>Comments</h1>
+      <div id="commentsId" style="padding-left: 115;">
+
+      </div>
+      <div style="padding-left: 115;">
+        <button id="btnLoadMore">Load more</button>
+      </div>
+      <div id="someoneTypingZone" style="display: none;">
+        <p id="someoneTypingId" style="text-align: left; float: left">Someone</p>
+        <img src="/images/typing.gif" style="text-align: left; float: left">
+      </div>
+      &#10;
+      <div id="commentZone" style="display: none; margin-top: 4.5rem;">
+        <input type="text" id="txtCommentId" placeholder="Type comment...." style="padding-left: 115;" />
+        <button id="btnComment">Comment</button>
+      </div>
+    </div>
   </div>
+
 </body>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -35,48 +62,160 @@
     clapQuantityId.innerHTML = clapQuantity;
   });
 
+  socket.on('create-comment-response', ({ comment }) => {
+    commentsId.innerHTML += commentComponent(comment);
+    window.scrollBy(0, 100);
+  });
+
+  socket.on('user-typing-response', (username) => {
+    const usernameShow = loginUsernameId.value;
+    if (username !== usernameShow) {
+      someoneTypingZone.style.display = '';
+      someoneTypingId.innerHTML = `${username}`;
+    }
+    window.scrollBy(0, 100);
+  });
+  
+  socket.on('user-pause-typing-response', (usernameShow) => {
+    someoneTypingZone.style.display = 'none';
+    someoneTypingId.innerHTML = '';
+  });
+
   clapId.onclick = async () => {
     const postId = txtPostId.value;
-    const Authorization = tokenId.value;
-    const result = await clapPost(postId, Authorization);
-    console.log(result);
+    const authorization = tokenId.value;
+    const result = await clapPost(postId, authorization);
+
     if (result.data.clapPost.isSuccess) {
       socket.emit('clap-post', { postId });
     }
   };
 
+  btnComment.onclick = async () => {
+    const postId = txtPostId.value;
+    const content = txtCommentId.value;
+    const authorization = tokenId.value;
+    const result = await createComment(authorization, postId, content);
+    if (result.data.createComment.isSuccess) {
+      socket.emit('create-comment', { comment: result.data.createComment.comment });
+    }
+
+    txtCommentId.value = '';
+  }
+
   btnLogin.onclick = async () => {
     const username = usernameId.value;
     const password = passwordId.value;
     const result = await login(username, password);
-    console.log(result);
+
     if (result.data.login.isSuccess) {
       const {
         user: { username: usernameDisplay },
         accessToken,
       } = result.data.login;
       tokenId.value = accessToken;
+      loginUsernameId.value = usernameDisplay;
       loginZone.innerHTML = `<h2>${usernameDisplay}</h2>`;
+      commentZone.style.display = '';
+
+      if (usernameDisplay !== currentPostOwnerId.value) {
+        clapId.style.display = '';    
+      }
     }
   };
 
   btnGet.onclick = async () => {
     const postId = txtPostId.value;
-    const result = await getPost(postId);
-    console.log(result);
-    if (result.data.post.isSuccess) {
-      const { title, description, content, clapQuantity } = result.data.post.post;
+    const limitCommentPerPage = 3;
+    const result = await getPost(postId, limitCommentPerPage);
+    btnLoadMore.style.display = '';
 
+    if (result.data.post.isSuccess) {
+      const { title, description, content, clapQuantity, owner } = result.data.post.post;
+      currentPostOwnerId.value = owner.username;
       titleId.innerHTML = title;
       descriptionId.innerHTML = description;
       contentId.innerHTML = content;
       clapQuantityId.innerHTML = clapQuantity;
-      clapId.style.display = '';
-      clapQuantityTxt.style.display = '';
+      showPostId.style.display = '';
 
       socket.emit('user-join-room-post', { postId });
+
+      if (loginUsernameId.value !== "" && loginUsernameId.value !== owner.username) {
+        clapId.style.display = '';    
+      }   
+    }
+
+    if (result.data.getCommentOfPost.isSuccess) {
+      const { lastId, comments } = result.data.getCommentOfPost;
+      lastCommentId.value = lastId;
+      renderComments(comments);
+      if (!lastId) {
+        btnLoadMore.style.display = 'none';
+      }
     }
   };
+
+  btnLoadMore.onclick = async () => {
+    const postId = txtPostId.value;
+    const lastId = lastCommentId.value;
+    const result = await loadMoreComments(postId, lastId, limit = 3);
+    if (result.data.getCommentOfPost.isSuccess) {
+      const { lastId, comments } = result.data.getCommentOfPost;
+      lastCommentId.value = lastId;
+      renderComments(comments, commentsId.innerHTML);
+
+      if (!lastId) {
+        btnLoadMore.style.display = 'none';
+      }
+    }
+  }
+
+  let timeOutTyping;
+  txtCommentId.onkeydown = () => {
+    const usernameShow = loginUsernameId.value;
+    socket.emit('user-typing', usernameShow);
+    clearTimeout(timeOutTyping);
+    timeOutTyping = setTimeout(() => {
+      socket.emit('user-pause-typing', usernameShow);
+    }, 1500);
+  }
+
+  function renderComments (comments, renderComments = '') {
+    comments.forEach(comment => {
+      renderComments += commentComponent(comment);
+    });
+    commentsId.innerHTML = renderComments;
+    window.scrollBy(0, 1000);
+  }
+
+  function commentComponent (comment) {
+    return `
+      <div>
+        <h3>${comment.user.username} (${formatDate(comment.createdAt)})</h3>
+        <p>${comment.content}</p>
+      </div>
+    `;
+  }
+
+  (async () => {
+    const result = await getPosts();
+    if (result.data.posts.isSuccess) {
+      let postComponent = '<h3>List Post</h3>';
+      const { posts } = result.data.posts;
+      posts.forEach(post => {
+        postComponent += `<p>${post._id} - ${post.title}</p>`
+      });
+
+      listPosts.innerHTML = postComponent;
+    }
+  })();
+
+  function formatDate (UTCDate) {
+    const dateTime = new Date(UTCDate);
+    const dateTimeFormated = `${dateTime.getFullYear()} - ${dateTime.getMonth() + 1} - ${dateTime.getDate()} ${dateTime.getHours()}:${dateTime.getMinutes()}:${dateTime.getSeconds()}`
+    return dateTimeFormated;
+  }
 
   function login(username, password) {
     return new Promise((resolve, reject) => {
@@ -117,7 +256,7 @@
     });
   }
 
-  function getPost(postId) {
+  function getPost(postId, limit) {
     return new Promise((resolve, reject) => {
       fetch('http://localhost:5000', {
         method: 'POST',
@@ -126,7 +265,7 @@
         },
         body: JSON.stringify({
           query: `
-          query getPost ($id: ID!) {
+          query getPost ($id: ID!, $lastCommentId: ID, $limit: Int) {
             post (_id: $id) {
               isSuccess
               message
@@ -142,10 +281,70 @@
                 clapQuantity
               }
             }
+
+            getCommentOfPost (filter: {post: $id, lastId: $lastCommentId}, limit: $limit) {
+              isSuccess
+              message
+              lastId
+              comments {
+                _id
+                content
+                createdAt
+                user {
+                  _id
+                  username
+                  email
+                  role
+                }
+              }
+            }
           }
         `,
           variables: {
             id: postId,
+            limit
+          },
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          resolve(result);
+        });
+    });
+  }
+
+  function loadMoreComments(postId, lastCommentId, limit) {
+    return new Promise((resolve, reject) => {
+      fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+          query getPost ($postId: ID!, $lastCommentId: ID, $limit: Int) {
+            getCommentOfPost (filter: {post: $postId, lastId: $lastCommentId}, limit: $limit) {
+              isSuccess
+              message
+              lastId
+              comments {
+                _id
+                content
+                createdAt
+                user {
+                  _id
+                  username
+                  email
+                  role
+                }
+              }
+            }
+          }
+        `,
+          variables: {
+            postId,
+            lastCommentId,
+            limit
           },
         }),
       })
@@ -183,5 +382,85 @@
           resolve(result);
         });
     });
+  }
+
+  function createComment(Authorization, postId, content, parent = null) {
+    return new Promise(resolve => {
+      fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization,
+        },
+        body: JSON.stringify({
+          query: `
+          mutation createComment ($postId: ID!, $content: String!, $parent: ID) {
+            createComment (input: {
+              post: $postId
+              content: $content
+              parent: $parent
+            }) {
+              isSuccess
+              message
+              comment {
+                _id
+                content
+                createdAt
+                user {
+                  _id
+                  username
+                  email
+                  role
+                }
+              }
+            }
+          }
+        `,
+          variables: {
+            postId,
+            content,
+            parent
+          },
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          resolve(result);
+        });
+    })
+  }
+
+  function getPosts(limit = 5, lastId = null) {
+    return new Promise(resolve => {
+      fetch('http://localhost:5000', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            query getAllPosts ($limit: Int, $lastId: ID) {
+              posts(filter: { lastId: $lastId }, limit: $limit) {
+                isSuccess
+                message
+                lastId
+                posts {
+                  _id
+                  title
+                } 
+              }
+            }
+        `,
+          variables: {
+            limit,
+            lastId
+          },
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          resolve(result);
+        });
+    })
   }
 </script>
